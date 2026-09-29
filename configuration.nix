@@ -125,11 +125,9 @@
      (writeShellApplication {
       name = "cursor";
       text = ''
-        exec ${
-          (import (builtins.fetchTarball {
-            url = "https://github.com/nix-community/nixGL/archive/main.tar.gz";
-          }) { inherit pkgs; }).auto.nixGLDefault
-        }/bin/nixGL ${pkgs.code-cursor}/bin/cursor "$@"
+        # nixGLDefault reads /proc and builtins.currentTime, which flakes reject.
+        # This machine is Intel, so the pure Mesa/Intel wrapper is the same choice.
+        exec ${pkgs.nixgl.nixGLIntel}/bin/nixGLIntel ${pkgs.code-cursor}/bin/cursor "$@"
       '';
     })
     neovim
