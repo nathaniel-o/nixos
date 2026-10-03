@@ -20,7 +20,23 @@
       system = "x86_64-linux";
       modules = [
         ./configuration.nix
-        { nixpkgs.overlays = [ nixgl.overlays.default ]; }
+        ./lampp.nix
+        {
+          nixpkgs.overlays = [
+            nixgl.overlays.default
+            # qtile 0.37 calls wlr_xcursor_image_get_buffer, which is wlroots 0.20.
+            # nixpkgs still passes wlroots_0_19 into the qtile build.
+            (final: prev: {
+              pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+                (_pyFinal: pyPrev: {
+                  qtile = pyPrev.qtile.override {
+                    wlroots = final.wlroots_0_20;
+                  };
+                })
+              ];
+            })
+          ];
+        }
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;

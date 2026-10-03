@@ -6,3 +6,5 @@
 !/configuration.nix
 !/hardware-configuration.nix
 !/home.nix
+!/lampp.nix
+!/lampp-package.nix

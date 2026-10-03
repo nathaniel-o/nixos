@@ -56,8 +56,7 @@
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
-
- 
+  services.xserver.windowManager.qtile.enable = true; 
 
 
   # Configure keymap in X11
@@ -101,10 +100,6 @@
     isNormalUser = true;
     description = "nathaniel";
     extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [
-      kdePackages.kate
-    #  thunderbird
-    ];
   };
 
   # Install firefox.
@@ -113,30 +108,8 @@
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
-  # List packages installed in system profile.
-  # You can use https://search.nixos.org/ to find more packages (and options).
-   environment.systemPackages = with pkgs; [
-     vim 
-     wget
-     git
-     ghostty
-     brave
-     #code-cursor
-     (writeShellApplication {
-      name = "cursor";
-      text = ''
-        # nixGLDefault reads /proc and builtins.currentTime, which flakes reject.
-        # This machine is Intel, so the pure Mesa/Intel wrapper is the same choice.
-        exec ${pkgs.nixgl.nixGLIntel}/bin/nixGLIntel ${pkgs.code-cursor}/bin/cursor "$@"
-      '';
-    })
-    neovim
-    keepassxc
-    firefly-iii
-    microsoft-edge
-   ];
-
-	nix.settings.experimental-features = ["nix-command" "flakes"];
+  # User programs live in home.nix.
+  nix.settings.experimental-features = ["nix-command" "flakes"];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
