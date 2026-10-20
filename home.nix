@@ -1,7 +1,7 @@
 # User profile for nathaniel.
 # Personal programs only. The account, Plasma, and services stay in configuration.nix.
 # Apply with: sudo nixos-rebuild switch --flake /etc/nixos#nixos
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
   home.username = "nathaniel";
   home.homeDirectory = "/home/nathaniel";
@@ -16,19 +16,94 @@
     '';
   };
 
+ 
+ 
+	programs.gh = {
+	  enable = true;
+	  settings = {
+	    git_protocol = "ssh";
+	    aliases = {
+	      co = "pr checkout";
+	      pv = "pr view";
+	    };
+	  };
+	  gitCredentialHelper = {
+	    enable = true;
+	    hosts = [ "https://github.com" ];
+	  };
+	  # Install extensions from nixpkgs
+	  extensions = [ pkgs.gh-s ];
+	};   
+    
+  xdg.mimeApps = {
+    enable = true;
+    defaultApplications =
+      {
+        "text/html" = [ "brave-browser.desktop" ];
+        "x-scheme-handler/http" = [ "brave-browser.desktop" ];
+        "x-scheme-handler/https" = [ "brave-browser.desktop" ];
+      }
+      // lib.genAttrs [
+        "image/avif"
+        "image/gif"
+        "image/heif"
+        "image/jpeg"
+        "image/jxl"
+        "image/png"
+        "image/bmp"
+        "image/x-eps"
+        "image/x-icns"
+        "image/x-ico"
+        "image/x-portable-bitmap"
+        "image/x-portable-graymap"
+        "image/x-portable-pixmap"
+        "image/x-xbitmap"
+        "image/x-xpixmap"
+        "image/tiff"
+        "image/x-psd"
+        "image/x-webp"
+        "image/webp"
+        "image/x-tga"
+        "image/x-xcf"
+        "image/openraster"
+        "image/svg+xml"
+        "image/svg+xml-compressed"
+      ] (_: [ "org.kde.gwenview.desktop" ]);
+  };
+
+ 
+
   home.packages = with pkgs; [
     vim
     wget
     git
-    ghostty
     rofi
     brave
     neovim
+    networkmanagerapplet
     keepassxc
     firefly-iii
     microsoft-edge
-    swift
     kdePackages.kate
+    freecad
+    swift
+    unzip
+    chromium
+    htop
+    obsidian
+    libreoffice
+    (writeShellApplication {
+      name = "phone-screen";
+      runtimeInputs = [
+        wayvnc
+        wlr-randr
+        android-tools
+        iproute2
+        python3
+        openssl
+      ];
+      text = builtins.readFile ./phone-screen.sh;
+    })
     (writeShellApplication {
       name = "cursor";
       text = ''

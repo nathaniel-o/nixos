@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -15,7 +16,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, nixgl, ... }: {
+  outputs = { self, nixpkgs, nixpkgs-unstable, home-manager, nixgl, ... }: {
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
       modules = [
@@ -35,12 +36,20 @@
                 })
               ];
             })
+	    (final: prev: {                                                     
+                    code-cursor = (import nixpkgs-unstable {                        
+                      system = final.stdenv.hostPlatform.system;                  
+                      config.allowUnfree = true;                                  
+                  }).code-cursor;                                                 
+            })    
           ];
         }
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          # Move an unmanaged file aside instead of aborting activation.
+          home-manager.backupFileExtension = "hmbak";
           home-manager.users.nathaniel = ./home.nix;
         }
       ];
