@@ -71,7 +71,6 @@
       ] (_: [ "org.kde.gwenview.desktop" ]);
   };
 
- 
 
   home.packages = with pkgs; [
     vim
@@ -112,5 +111,8 @@
         exec ${pkgs.nixgl.nixGLIntel}/bin/nixGLIntel ${pkgs.code-cursor}/bin/cursor "$@"
       '';
     })
+    vscodium
+    librewolf
+    docker-compose
   ];
 }

@@ -55,11 +55,86 @@
 #	windowManager.qtile.enable = true; 
   #};
    services.xserver.enable = true;
+   services.printing.drivers = [ pkgs.pantum-driver ];
+
+   hardware.sane = {
+     enable = true;
+     extraBackends = [ pkgs.pantum-driver ];
+   };
+
 
   # Enable the KDE Plasma Desktop Environment.
   services.displayManager.sddm.enable = true;
   services.desktopManager.plasma6.enable = true;
-  services.xserver.windowManager.qtile.enable = true; 
+  services.xserver.windowManager.qtile.enable = true;
+  # Plasma's module would otherwise select itself at the login screen.
+  # Plasma stays in the session menu.
+  services.displayManager.defaultSession = "qtile";
+
+  # Qtile does not ship a lock screen. `loginctl lock-session` is answered by
+  # Plasma's kscreenlocker, so a Qtile session either failed to lock or showed
+  # the Plasma greeter. swaylock uses the Wayland session-lock protocol Qtile
+  # implements. i3lock covers the X11 Qtile session. Plasma still uses
+  # kscreenlocker, because session-lock defers to it there.
+  programs.i3lock.enable = true;
+  security.pam.services.swaylock = { };
+  environment.systemPackages = [
+    pkgs.swayidle
+    pkgs.swaylock
+    pkgs.xss-lock
+    (pkgs.writeShellScriptBin "session-lock" ''
+      set -eu
+      foreground=0
+      if [ "''${1:-}" = "--foreground" ]; then
+        foreground=1
+      fi
+
+      # SDDM names the Wayland session "plasma" and the X11 session "plasmax11".
+      # startplasma also sets XDG_CURRENT_DESKTOP=KDE.
+      case "''${DESKTOP_SESSION:-}" in
+        plasma*)
+          exec loginctl lock-session
+          ;;
+      esac
+      case "''${XDG_CURRENT_DESKTOP:-}" in
+        *KDE*)
+          exec loginctl lock-session
+          ;;
+      esac
+
+      if [ "''${XDG_SESSION_TYPE:-}" = "wayland" ]; then
+        # Colors follow the Qtile bar. -f returns once the lock is visible,
+        # so suspend is not stuck behind the password prompt. xss-lock needs
+        # the locker to stay in the foreground until unlock.
+        # This swaylock has no --clock. Those options made it exit before
+        # locking, so the menu did nothing and suspend never asked for a
+        # password. The indicator stays visible so the screen is not a blank
+        # panel, which is what looked like a lost display.
+        args=(
+          --color 191724
+          --inside-color 26233a
+          --ring-color ebbcba
+          --line-color 26233a
+          --separator-color 191724
+          --text-color e0def4
+          --key-hl-color 9ccfd8
+          --bs-hl-color eb6f92
+          --indicator-radius 120
+          --indicator-thickness 10
+          --indicator-idle-visible
+        )
+        if [ "$foreground" -eq 0 ]; then
+          args=(-f "''${args[@]}")
+        fi
+        log="$HOME/.local/state/qtile/session-lock.log"
+        mkdir -p "$(dirname "$log")"
+        echo "$(date --iso-8601=seconds) swaylock" >>"$log"
+        exec swaylock "''${args[@]}" >>"$log" 2>&1
+      fi
+
+      exec i3lock -c 191724
+    '')
+  ];
 
 
   # Configure keymap in X11
@@ -98,16 +173,21 @@
   # Enable touchpad support (enabled default in most desktopManager).
   # services.libinput.enable = true;
 
+  # allow Docker
+virtualisation.docker.enable = true;
+
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users."nathaniel" = {
     isNormalUser = true;
     description = "nathaniel";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "lp" "scanner" "docker"];
   };
+
 
   # Install firefox.
   programs.firefox.enable = true;
-
+  # Install Zoom
+  programs.zoom-us.enable = true;
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
