@@ -16,8 +16,8 @@
     '';
   };
 
- 
- 
+   programs.librewolf.enable = true;
+
 	programs.gh = {
 	  enable = true;
 	  settings = {
@@ -39,9 +39,9 @@
     enable = true;
     defaultApplications =
       {
-        "text/html" = [ "brave-browser.desktop" ];
-        "x-scheme-handler/http" = [ "brave-browser.desktop" ];
-        "x-scheme-handler/https" = [ "brave-browser.desktop" ];
+        "text/html" = [ "librewolf.desktop" ];
+        "x-scheme-handler/http" = [ "librewolf.desktop" ];
+        "x-scheme-handler/https" = [ "librewolf.desktop" ];
       }
       // lib.genAttrs [
         "image/avif"
@@ -112,7 +112,6 @@
       '';
     })
     vscodium
-    librewolf
     docker-compose
   ];
 }

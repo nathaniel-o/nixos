@@ -2,7 +2,7 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   imports =
@@ -70,6 +70,49 @@
   # Plasma's module would otherwise select itself at the login screen.
   # Plasma stays in the session menu.
   services.displayManager.defaultSession = "qtile";
+
+	# Qtile enables GNOME Keyring and Plasma enables KWallet. The keyring
+	# daemon that actually answers apps comes up locked, so Brave, Edge, and
+	# Cursor ask for a password. Leave both off. Plasma still ships the
+	# KWallet binaries; nothing starts them, and their D-Bus activation
+	# files are dropped below.
+	services.gnome.gnome-keyring.enable = false;
+	security.pam.services.login.kwallet.enable = lib.mkForce false;
+	security.pam.services.kde.kwallet.enable = lib.mkForce false;
+	environment.extraSetup = ''
+	  rm -f \
+	    "$out/share/dbus-1/services/org.freedesktop.impl.portal.desktop.kwallet.service" \
+	    "$out/share/dbus-1/services/org.kde.kwalletd5.service" \
+	    "$out/share/dbus-1/services/org.kde.kwalletd6.service" \
+	    "$out/share/dbus-1/services/org.kde.kwalletmanager.service" \
+	    "$out/share/dbus-1/services/org.kde.secretprompter.service" \
+	    "$out/share/dbus-1/services/org.kde.secretservicecompat.service"
+	'';
+
+  # Qtile is a wlroots compositor. Plasma's portal cannot capture it.
+  # ~/.config/qtile/config.py sets XDG_CURRENT_DESKTOP=qtile and imports
+  # that into the user session so this file is the one portals load.
+  xdg.portal.wlr = {
+    enable = true;
+    settings.screencast = {
+      max_fps = 30;
+      chooser_type = "simple";
+      chooser_cmd = "${pkgs.slurp}/bin/slurp -f 'Monitor: %o' -or";
+    };
+  };
+  xdg.portal.config.qtile = {
+    default = [ "gtk" ];
+    "org.freedesktop.impl.portal.ScreenCast" = [ "wlr" ];
+    "org.freedesktop.impl.portal.Screenshot" = [ "wlr" ];
+    "org.freedesktop.impl.portal.Inhibit" = [ "none" ];
+  };
+  services.xserver.displayManager.importedVariables = [
+    "XDG_CURRENT_DESKTOP"
+    "XDG_SESSION_DESKTOP"
+    "WAYLAND_DISPLAY"
+    "XDG_SESSION_TYPE"
+  ];
+
 
   # Qtile does not ship a lock screen. `loginctl lock-session` is answered by
   # Plasma's kscreenlocker, so a Qtile session either failed to lock or showed
